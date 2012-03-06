@@ -1,0 +1,11 @@
+name = "Primer Theme Manager"
+description = "Helper module for Primer Theme that manages theme settings"
+package = "NC State University Custom Modules"
+project = "primermanager"
+
+version = "6.x-1.0"
+core = 6.x
+php = 5.2
+
+; for updates to the theme, specify features server location
+project status url = http://drupal.ncsu.edu/features/fserver

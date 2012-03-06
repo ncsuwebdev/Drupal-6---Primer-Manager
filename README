@@ -1,0 +1,55 @@
+******************************************************************
+    DRUPAL MODULE INFO
+******************************************************************
+
+Primer Manager for Drupal 6
+
+
+
+
+
+******************************************************************
+    CONTACT INFORMATION
+******************************************************************
+
+    Nick Young
+    Web Developer, Office of Information Technology
+    NC State University
+    
+    njyoung@ncsu.edu | oitdesign@ncsu.edu
+    
+    http://oitdesign.ncsu.edu | http://drupal.ncsu.edu
+
+
+
+
+
+
+******************************************************************
+    DESCRIPTION
+******************************************************************
+
+    This module provides a method to save and re-use configurations
+    of the Primer Theme (http://drupal.ncsu.edu).
+
+    Permitted users can save their current settings, or use an
+    existing configuration.
+
+    Configuration are available from two sources:
+
+        1. Local configurations
+            * Saved in the database table with the "configKey"
+              value having a prefix of local_
+            * These are managed by the individual site and are
+              are not available for other site owners to use
+            
+        2. Global configurations
+            * Saved in the database table with the "configKey"
+              value having a prefix of global_
+            * These are managed by the NC State Drupal administrator
+              site and are available for other site owners to use
+            * Global configurations will be added to this module
+              periodically so that they are available it is upgraded
+          
+
+ 

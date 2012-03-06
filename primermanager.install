@@ -1,0 +1,63 @@
+<?php
+
+/**
+* Implementation of hook_install().
+*/
+
+function primermanager_install(){
+    // Use schema API to create database table.
+    drupal_install_schema('primermanager');
+}
+
+/**
+* Implementation of hook_uninstall().
+*/
+
+function primermanager_uninstall(){
+    // Use schema API to create database table.
+    drupal_uninstall_schema('primermanager');
+}
+
+
+/**
+* Implementation of hook_schema().
+* http://api.drupal.org/api/drupal/developer!hooks!install.php/function/hook_schema/6
+* Data Types: http://drupal.org/node/159605
+*/
+
+function primermanager_schema(){
+    $schema['primermanager'] = array(
+        'description'   => t('Stores primer theme configurations'),
+        'fields'    => array(
+            'configKey'  => array(
+                'type' => 'varchar',
+                'length' => 255, 
+                'not null' => TRUE, 
+                'default' => 0,
+                'description' => t('Unique key to identify the configuration'),
+            ),
+            'name'  => array(
+                'type' => 'varchar',
+                'length' => 255, 
+                'not null' => TRUE, 
+                'default' => 0,
+                'description' => t('Human readable name for this configuration'),
+            ),
+            'date'  => array(
+                'type' => 'int',
+                'not null' => TRUE, 
+                'default' => 0,
+                'description' => t('Date this config was last updated'),
+            ),
+            'settings'  => array(
+                'type' => 'text',
+                'size' => 'big',
+                'description' => t('Serialized array of settings for this configuration'),
+            ),
+        ),
+        'primary key' => array('configKey'),
+    );
+                                  
+    return $schema;
+
+}

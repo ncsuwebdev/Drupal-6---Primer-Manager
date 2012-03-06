@@ -1,0 +1,322 @@
+<?php
+/***************************************************************************
+ *
+ * Module Name:  Primer Theme Manager
+ * Plugin URI:   http://drupal.ncsu.edu
+ * Description:  Helper module for Primer Theme that manages theme settings
+ * Drupal:       6.x
+ * @todo - Replace all ? with appropriate documentation
+ * 
+ **************************************************************************/
+
+/**
+ * Initialize settings for the module
+ *
+ */
+function primermanager_init()
+{ 
+      drupal_add_js(drupal_get_path('module', 'primermanager') .'/primermanager.js');
+}
+
+/*
+ * Implementation of hook_enable()
+ * http://api.drupal.org/api/drupal/modules--system--system.api.php/function/hook_enable/7
+ * 
+ */
+
+function primermanager_enable() {
+  
+}
+
+/*
+ * Implementation of hook_disable()
+ * http://api.drupal.org/api/drupal/modules--system--system.api.php/function/hook_disable/7
+ * 
+ */
+function primermanager_disable() {
+	
+}
+
+/**
+ * Provide help and additional information about our module by implementing Drupal's hook_help().
+ * Because of the use of the .info file that exists, this hook is now optional.
+ * However, it is a best practice to implement it.
+ * http://drupal.org/node/206756
+ * http://api.drupal.org/api/drupal/developer--hooks--core.php/function/hook_help/6
+ *
+ * @param string $path - ?
+ * @param ? $arg - ?
+ * @return string
+ */
+function primermanager_help($path, $arg)
+{
+    $output = '';
+    
+    if ($path == "admin/help#primermanager") {
+        $output .= '<p>'.  t("This module allows you to save or export theme configurations for the Primer Theme.") .'</p>';
+        $output .= '<p>'.  t("This is intended to help people reuse and also share their configurations, so that alike sites can easily be kept looking the same.") .'</p>';
+     }
+
+     return $output;
+}
+
+/**
+ * Create a module settings/configuration page
+ * 
+ * @return ?
+ *
+ * http://drupal.org/node/206761
+ */
+
+function primermanager_admin()
+{
+	
+    // if form submitted, then process choice and apply theme settings
+	if($_REQUEST['op'] == 'Submit') {
+		
+		if(empty($_REQUEST['primermanager_name'])) {
+			$name = 'Unnamed Configuration';
+		} else {
+			$name = htmlentities($_REQUEST['primermanager_name']);
+		}
+		
+		if($_REQUEST['primermanager_selected_operation'] == 'save') {
+			primermanager_save_settings_to_database(theme_get_settings('primer'), $name);
+		}
+		
+		if($_REQUEST['primermanager_selected_operation'] == 'export') {
+			primermanager_export_settings_to_file(theme_get_settings('primer'), $name);
+		}
+		
+		if($_REQUEST['primermanager_selected_operation'] == 'delete') {
+			
+			primermanager_delete_local_configuration($_REQUEST['primermanager_local_configurations']);
+						
+		}
+		
+		/*
+		echo '<pre>';
+    	print_r($_REQUEST);
+		die('here');
+		*/
+		
+	} else {
+		
+		$form = array();	
+		
+	    $form['primermanager_selected_operation'] = array(
+	        '#type'          => 'select',
+	        '#title'         => t('What do you want to do?'),
+	        '#default_value' => 0,
+	        '#required'      => TRUE,
+	        '#options'       => array(
+	    							'select'	=> '----select----',
+	        						'save' 		=> 'Save current theme settings as a new local configuration',
+	    							'export' 	=> 'Export current theme settings to share with others (http://drupal.ncsu.edu)',
+	    							'delete' 	=> 'Remove a local configuration permanently (cannot be undone)',	
+	    						),
+	    );
+	    
+		$form['primermanager_local_configurations'] = array(
+	        '#type'          => 'select',
+	        '#title'         => t('Select Local Configuration'),
+	        '#default_value' => 0,
+	        '#required'      => TRUE,
+	    );
+	    
+		$configurations = primermanager_getLocalConfigurations();
+		$form['primermanager_local_configurations']['#options'][0] = '--- select ---';
+	    foreach ($configurations as $c) {
+	        $form['primermanager_local_configurations']['#options'][$c['configKey']] = $c['name'] . ' (' . date('Y-m-d', $c['date']) . ')';
+	    }
+	    
+	    $form['primermanager_name'] = array(
+	        '#type'          => 'textfield',
+	        '#title'         => t('Human readable name for this configuration '),
+	        '#default_value' => '',
+	        '#description'   => t("<p>Give a short (max 30 characters) but descriptive name for this configuration so you and others know what to expect if they apply it to their site. <br />IE: 'OIT Committee Theme 2012 v1.'</p>"),
+	        '#required'      => FALSE,
+	    	'#maxlength'	 => '30', 
+	    );
+	}
+
+  	$form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
+	
+	return $form;
+
+}
+  
+/**
+ * Need to define a URL within Drupal for the module settings page
+ * http://api.drupal.org/api/drupal/developer--hooks--core.php/function/hook_menu/6
+ * http://drupal.org/node/206761
+ *
+ * @return ?
+ */
+function primermanager_menu()
+{
+    $items = array();
+
+    $items['admin/build/primermanager'] = array(
+        'title'            => 'Primer Theme Manager',
+        'description'      => 'Manage Primer Theme Configurations',
+        'page callback'    => 'drupal_get_form',
+        'page arguments'   => array('primermanager_admin'),
+        'access arguments' => array('access administration pages'),
+        'type'             => MENU_NORMAL_ITEM,
+    );
+
+    return $items;
+
+}
+
+
+/*
+ * Save settings to the database
+ * 
+ */
+
+function primermanager_save_settings_to_database($settings, $name) {
+	
+	// prepend with "local_" so that it cannot conflict with any global configurations that might be added later
+	$newConfigKey = 'local_' . primermanager_convert_name_to_local_configKey($name);
+	
+	// remove unnecessary fields from $settings
+	$savedSettings = array();
+	foreach($settings as $key => $value) {
+		if(!in_array($key, primermanager_unshared_fields())) {		
+			$savedSettings[$key] = $value;
+		}
+	}
+	
+	// insert into the primermanager table
+	db_query('INSERT INTO {primermanager} 
+   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
+   		$newConfigKey, $name, time(), serialize($savedSettings)
+	);
+	
+	drupal_set_message(t('New Primer Theme Configuration Saved: ' . $newConfigKey));
+	watchdog('primermanager', 'New Primer Theme Configuration Saved: ' . $newConfigKey);
+	
+}
+
+/*
+ * Delete configuration from local database
+ * 
+ */
+
+function primermanager_delete_local_configuration($configKey) {
+
+	// delete the record from the primermanager table
+	db_query("DELETE FROM {primermanager} WHERE configKey = '%s'", $configKey);
+	
+	drupal_set_message(t('Local configuration deleted: ' . $configKey));
+	watchdog('primermanager', 'Local configuration deleted: ' . $configKey);
+	
+}
+
+/*
+ * export settings file
+ * 
+ */
+function primermanager_export_settings_to_file($settings, $name) {
+	
+	$filename = 'primer_theme_configuration_' . primermanager_convert_name_to_local_configKey($name);
+	
+	header('Content-type: text/plain');
+	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');
+	
+	$spacer = '    ';
+	
+	echo "'exported_" . primermanager_convert_name_to_local_configKey($name) ."' => array( \n
+		'configKey'	=> '\texported_" . primermanager_convert_name_to_local_configKey($name) ."',\n
+		'name'		=> '\t" . $name . "',\n
+		'date'		=> '\t" . time() . "',\n
+		'settings'	=> \tarray(\n
+	";
+	
+	foreach($settings as $key => $value) {
+		if(!in_array($key, primermanager_unshared_fields())) {		
+			echo "\t\t\t'" . $key . "' => '" . $value . "',\n";
+		}
+	}
+	
+	echo "),\n),";
+	
+	watchdog('primermanager', 'New Primer Theme Configuration Exported: exported_' . primermanager_convert_name_to_local_configKey($name));
+	/*
+		echo '<pre>';
+	    print_r($settings);
+		die('settings exported to file');
+	*/
+}
+
+/*
+ * returns array of fields that should not be saved to the database or exported for sharing 
+ * 
+ */
+
+function primermanager_unshared_fields() {
+	
+	return array(
+		'mission', 
+	    'default_logo',
+	    'logo_path',
+	    'default_favicon',
+	    'favicon_path',
+	    'primary_links',
+	    'secondary_links',
+	    'toggle_logo',
+	    'toggle_favicon',
+	    'toggle_name',
+	    'toggle_search',
+	    'toggle_slogan',
+	    'toggle_mission',
+	    'toggle_node_user_picture',
+	    'toggle_comment_user_picture',
+	    'toggle_primary_links',
+	    'toggle_secondary_links',
+	    'toggle_node_info_image',
+	    'toggle_node_info_page',
+	    'toggle_node_info_story',
+	    'toggle_node_info_webform',
+	    'logo_upload',
+	    'favicon_upload',
+	    'primermanager_selected_configuration',
+	    'initialcolorsAll',
+	    'initialcolorsPrimary',
+	    'initialcolorsSecondary',
+	    'initialcolorsSupport',
+	    'allPresetConfigurations'
+	);
+	
+}
+
+function primermanager_convert_name_to_local_configKey($name) {
+	return strtolower(preg_replace("/[^a-zA-Z0-9]/", "", $name)) . "_" . time();
+}
+
+
+/*
+ * get all the local configurations saved by the primermanager module
+ * 
+ * 
+ */
+function primermanager_getLocalConfigurations() {
+		
+    $result = db_query("SELECT * FROM {primermanager}");
+	$returnArray = array();
+	
+	while ($c = db_fetch_array($result)) {
+		
+		$returnArray[$c['configKey']]['configKey'] = $c['configKey'];
+		$returnArray[$c['configKey']]['name'] = $c['name'];
+		$returnArray[$c['configKey']]['date'] = $c['date'];
+		$returnArray[$c['configKey']]['settings'] = unserialize($c['settings']);
+  	
+	}
+	
+	return $returnArray;	
+	
+}
+
