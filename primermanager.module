@@ -248,19 +248,27 @@ function primermanager_import_settings_to_database($importedSettings) {
  
 	$importArray = json_decode($importedSettings, true); // decodes json string, and the true flag returns an assoc array instead of an object
 	
+	// get all local configurations so we can make sure that the one being imported does not already exist
+	$allLocalConfigurations = primermanager_getLocalConfigurations();
+	
 	foreach($importArray as $i) {
 
-		// insert into the primermanager table
-		db_query('INSERT INTO {primermanager} 
-	   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
-	   		$i['configKey'], $i['name'], time(), serialize($i['settings'])
-		);
+		if(isset($allLocalConfigurations[$i['configKey']])) {
+			drupal_set_message(t('The configuration you attempted to import already exists: ' . $i['name']));
+		} else {
 		
-		drupal_set_message(t('Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')'));
-		drupal_set_message(t('The new configuration is now available from the theme configuration page'));
-		watchdog('primermanager', 'Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')');
-		
-		return true;
+			// insert into the primermanager table
+			db_query('INSERT INTO {primermanager} 
+		   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
+		   		$i['configKey'], $i['name'], time(), serialize($i['settings'])
+			);
+			
+			drupal_set_message(t('Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')'));
+			drupal_set_message(t('The new configuration is now available from the theme configuration page'));
+			watchdog('primermanager', 'Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')');
+			
+			return true;
+		}
 	}
 	
 }
@@ -408,4 +416,6 @@ function primermanager_getLocalConfigurations() {
 	return $returnArray;	
 	
 }
+
+
 
