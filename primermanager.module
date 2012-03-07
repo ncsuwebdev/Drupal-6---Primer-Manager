@@ -62,6 +62,7 @@ function primermanager_help($path, $arg)
     if ($path == "admin/help#primermanager") {
         $output .= '<p>'.  t("This module allows you to save or export theme configurations for the Primer Theme.") .'</p>';
         $output .= '<p>'.  t("This is intended to help people reuse and also share their configurations, so that alike sites can easily be kept looking the same.") .'</p>';
+        $output .= '<p>'.  t("More information available on the module's page here: <a href=\"http://drupal.ncsu.edu/features/project/primer-theme-manager\" target=\"_blank\">http://drupal.ncsu.edu/features/project/primer-theme-manager</a>.") .'</p>';
      }
 
      return $output;
