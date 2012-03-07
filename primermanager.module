@@ -38,6 +38,13 @@ function primermanager_disable() {
 }
 
 /**
+ * Implementation of hook_perm().
+ */
+function primermanager_perm() {
+  return array('administer primer manager');
+}
+
+/**
  * Provide help and additional information about our module by implementing Drupal's hook_help().
  * Because of the use of the .info file that exists, this hook is now optional.
  * However, it is a best practice to implement it.
@@ -178,7 +185,7 @@ function primermanager_menu()
         'description'      => 'Manage Primer Theme Configurations',
         'page callback'    => 'drupal_get_form',
         'page arguments'   => array('primermanager_admin'),
-        'access arguments' => array('access administration pages'),
+        'access arguments' => array('administer primer manager'),
         'type'             => MENU_NORMAL_ITEM,
     );
 
