@@ -84,14 +84,20 @@ function primermanager_admin()
 			primermanager_save_settings_to_database(theme_get_settings('primer'), $name);
 		}
 		
+		if($_REQUEST['primermanager_selected_operation'] == 'import') {
+			primermanager_import_settings_to_database($_REQUEST['primermanager_import_settings']);
+		}
+		
+		if($_REQUEST['primermanager_selected_operation'] == 'share') {
+			primermanager_export_settings_for_local_share(theme_get_settings('primer'), $name);
+		}
+		
 		if($_REQUEST['primermanager_selected_operation'] == 'export') {
-			primermanager_export_settings_to_file(theme_get_settings('primer'), $name);
+			primermanager_export_settings_for_global_share(theme_get_settings('primer'), $name);
 		}
 		
 		if($_REQUEST['primermanager_selected_operation'] == 'delete') {
-			
 			primermanager_delete_local_configuration($_REQUEST['primermanager_local_configurations']);
-						
 		}
 		
 		/*
@@ -111,9 +117,11 @@ function primermanager_admin()
 	        '#required'      => TRUE,
 	        '#options'       => array(
 	    							'select'	=> '----select----',
-	        						'save' 		=> 'Save current theme settings as a new local configuration',
-	    							'export' 	=> 'Export current theme settings to share with others (http://drupal.ncsu.edu)',
-	    							'delete' 	=> 'Remove a local configuration permanently (cannot be undone)',	
+	        						'save' 		=> 'Save current theme as new preset',
+	    							'share' 	=> 'Share current theme as a preset',
+	        						'import' 	=> 'Import a shared theme preset',
+	    							'export' 	=> 'Export current theme to submit to Drupal Admins',
+	    							'delete' 	=> 'Remove a preset permanently (cannot be undone)',	
 	    						),
 	    );
 	    
@@ -137,6 +145,14 @@ function primermanager_admin()
 	        '#description'   => t("<p>Give a short (max 30 characters) but descriptive name for this configuration so you and others know what to expect if they apply it to their site. <br />IE: 'OIT Committee Theme 2012 v1.'</p>"),
 	        '#required'      => FALSE,
 	    	'#maxlength'	 => '30', 
+	    );
+	    
+	    $form['primermanager_import_settings'] = array(
+	        '#type'          => 'textarea',
+	        '#title'         => t('Paste the exported settings file contents here'),
+	        '#default_value' => '',
+	        '#description'   => t("<p>Copy the entire contents of an exported preset file into this text area.</p>"),
+	        '#required'      => FALSE,
 	    );
 	}
 
@@ -216,24 +232,84 @@ function primermanager_delete_local_configuration($configKey) {
 }
 
 /*
- * export settings file
+ * Import settings to a local configuration
  * 
  */
-function primermanager_export_settings_to_file($settings, $name) {
+
+function primermanager_import_settings_to_database($importedSettings) {
+ 
+	$importArray = json_decode($importedSettings, true); // decodes json string, and the true flag returns an assoc array instead of an object
+	
+	foreach($importArray as $i) {
+
+		// insert into the primermanager table
+		db_query('INSERT INTO {primermanager} 
+	   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
+	   		$i['configKey'], $i['name'], time(), serialize($i['settings'])
+		);
+		
+		drupal_set_message(t('Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')'));
+		watchdog('primermanager', 'Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')');
+		
+		return true;
+	}
+	
+}
+
+/*
+ * export settings file so it can be imported locally
+ * 
+ */
+function primermanager_export_settings_for_local_share($settings, $name) {
 	
 	$filename = 'primer_theme_configuration_' . primermanager_convert_name_to_local_configKey($name);
 	
 	header('Content-type: text/plain');
-	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');
+	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');	
 	
-	$spacer = '    ';
+	$returnArray = array();
+	$fieldsArray = array();
+	foreach($settings as $key => $value) {
+		if(!in_array($key, primermanager_unshared_fields())) {		
+			$fieldsArray[$key] = $value;
+		}
+	}
 	
-	echo "'exported_" . primermanager_convert_name_to_local_configKey($name) ."' => array( \n
-		'configKey'	=> '\texported_" . primermanager_convert_name_to_local_configKey($name) ."',\n
-		'name'		=> '\t" . $name . "',\n
-		'date'		=> '\t" . time() . "',\n
-		'settings'	=> \tarray(\n
-	";
+	$returnArray['shared_' . primermanager_convert_name_to_local_configKey($name)] = array(
+		'configKey'	=> 'shared_' . primermanager_convert_name_to_local_configKey($name),
+		'name'		=> $name,
+		'date'		=> time(),
+		'settings'	=> $fieldsArray,
+	);
+	
+	echo json_encode($returnArray);
+	
+	watchdog('primermanager', 'New Primer Theme Configuration Exported: exported_' . primermanager_convert_name_to_local_configKey($name));
+	/*
+		echo '<pre>';
+	    print_r($settings);
+		die('settings exported to file');
+	*/
+}
+
+/*
+ * export settings file so it can be added to the global presets
+ * 
+ */
+function primermanager_export_settings_for_global_share($settings, $name) {
+	
+	$filename = 'primer_theme_configuration_' . primermanager_convert_name_to_local_configKey($name);
+	
+	header('Content-type: text/plain');
+	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');	
+	
+	echo "[START]\n
+		'exported_" . primermanager_convert_name_to_local_configKey($name) ."' => array( \n
+		'configKey'	=>\t'exported_" . primermanager_convert_name_to_local_configKey($name) ."',\n
+		'name' =>\t'" . $name . "',\n
+		'date' =>\t'" . time() . "',\n
+		'settings' =>\tarray(\n
+		";
 	
 	foreach($settings as $key => $value) {
 		if(!in_array($key, primermanager_unshared_fields())) {		
@@ -241,7 +317,7 @@ function primermanager_export_settings_to_file($settings, $name) {
 		}
 	}
 	
-	echo "),\n),";
+	echo "),\n),\n[END]";
 	
 	watchdog('primermanager', 'New Primer Theme Configuration Exported: exported_' . primermanager_convert_name_to_local_configKey($name));
 	/*
@@ -287,7 +363,11 @@ function primermanager_unshared_fields() {
 	    'initialcolorsPrimary',
 	    'initialcolorsSecondary',
 	    'initialcolorsSupport',
-	    'allPresetConfigurations'
+	    'allPresetConfigurations',
+		'site_title_top_line',
+		'site_title_bottom_line',
+		'footer_contact_information',
+		'copyright_information',
 	);
 	
 }
