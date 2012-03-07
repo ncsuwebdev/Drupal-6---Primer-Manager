@@ -32,24 +32,48 @@ Primer Manager for Drupal 6
     This module provides a method to save and re-use configurations
     of the Primer Theme (http://drupal.ncsu.edu).
 
-    Permitted users can save their current settings, or use an
-    existing configuration.
+    The Primer Theme Manager module is an optional partner for the 
+    Primer Theme. It only works with the Primer theme, and no others.
+    
+    
+    
 
-    Configuration are available from two sources:
-
-        1. Local configurations
-            * Saved in the database table with the "configKey"
-              value having a prefix of local_
-            * These are managed by the individual site and are
-              are not available for other site owners to use
-            
-        2. Global configurations
-            * Saved in the database table with the "configKey"
-              value having a prefix of global_
-            * These are managed by the NC State Drupal administrator
-              site and are available for other site owners to use
-            * Global configurations will be added to this module
-              periodically so that they are available it is upgraded
+******************************************************************
+    FEATURES
+******************************************************************
+    Save theme configurations locally for re-use
+    
+    Export theme configurations to share with other primer-themed 
+    websites
+    
+    Export theme configurations to share with the Drupal service 
+    administrator, who can make your configuration available to 
+    everyone using the primer theme automatically.
+    
+    Import theme configurations that were exported by someone 
+    else using this module
+    
+    Delete local theme configurations
+    
+    
+    
+    
+******************************************************************
+    CONFIGURATION
+******************************************************************
+    1. Install the module according to Drupal instructions
+    2. Set permissions for "Administer Primer Manager"
+    3. Access module options from 
+        "Site Building" --> Primer Theme Manager
+    
+    
+    Important: When applying or exporting the theme configuration, 
+    these settings will be ignored.
+        
+        Header Region --- Site Title Top Line
+        Header Region --- Site Title Bottom Line
+        Footer Region --- Copyright Information
+        Footer Region --- Contact Information Block
           
 
  

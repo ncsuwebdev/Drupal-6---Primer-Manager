@@ -219,6 +219,7 @@ function primermanager_save_settings_to_database($settings, $name) {
 	);
 	
 	drupal_set_message(t('New Primer Theme Configuration Saved: ' . $newConfigKey));
+	drupal_set_message(t('The new configuration is now available from the theme configuration page'));
 	watchdog('primermanager', 'New Primer Theme Configuration Saved: ' . $newConfigKey);
 	
 }
@@ -256,6 +257,7 @@ function primermanager_import_settings_to_database($importedSettings) {
 		);
 		
 		drupal_set_message(t('Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')'));
+		drupal_set_message(t('The new configuration is now available from the theme configuration page'));
 		watchdog('primermanager', 'Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')');
 		
 		return true;
