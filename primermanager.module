@@ -181,6 +181,7 @@ function primermanager_menu()
 {
     $items = array();
 
+    // primer manager menu item
     $items['admin/build/primermanager'] = array(
         'title'            => 'Primer Theme Manager',
         'description'      => 'Manage Primer Theme Configurations',
@@ -189,6 +190,25 @@ function primermanager_menu()
         'access arguments' => array('administer primer manager'),
         'type'             => MENU_NORMAL_ITEM,
     );
+
+    // primer configuration menu item for moderators (those with configure primer theme permission)
+    $items['admin/build/primerconfiguration'] = array(
+	    'title' 			=> 'Primer Theme Configuration',
+	    'page callback' 	=> 'drupal_goto',
+	    'page arguments' 	=> array('admin/build/themes/settings/primer'),
+	    'access arguments' 	=> array('configure primer theme', 'select different theme'),
+	    'type' 				=> MENU_LOCAL_TASK
+  	);
+
+  	// primer configuration menu item for admins (those with select different theme permissions)
+  	$items['admin/build/primerconfiguration'] = array(
+	    'title' 			=> 'Primer Theme Configuration',
+	    'page callback' 	=> 'drupal_goto',
+	    'page arguments' 	=> array('admin/build/themes/settings/primer'),
+	    'access arguments' 	=> array('select different theme'),
+	    'type' 				=> MENU_LOCAL_TASK
+  	);
+
 
     return $items;
 
@@ -419,4 +439,4 @@ function primermanager_getLocalConfigurations() {
 }
 
 
-
+  
