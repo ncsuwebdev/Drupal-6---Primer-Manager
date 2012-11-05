@@ -6,7 +6,7 @@
  * Description:  Helper module for Primer Theme that manages theme settings
  * Drupal:       6.x
  * @todo - Replace all ? with appropriate documentation
- * 
+ *
  **************************************************************************/
 
 /**
@@ -14,27 +14,27 @@
  *
  */
 function primermanager_init()
-{ 
+{
       drupal_add_js(drupal_get_path('module', 'primermanager') .'/primermanager.js');
 }
 
 /*
  * Implementation of hook_enable()
  * http://api.drupal.org/api/drupal/modules--system--system.api.php/function/hook_enable/7
- * 
+ *
  */
 
 function primermanager_enable() {
-  
+
 }
 
 /*
  * Implementation of hook_disable()
  * http://api.drupal.org/api/drupal/modules--system--system.api.php/function/hook_disable/7
- * 
+ *
  */
 function primermanager_disable() {
-	
+
 }
 
 /**
@@ -58,7 +58,7 @@ function primermanager_perm() {
 function primermanager_help($path, $arg)
 {
     $output = '';
-    
+
     if ($path == "admin/help#primermanager") {
         $output .= '<p>'.  t("This module allows you to save or export theme configurations for the Primer Theme.") .'</p>';
         $output .= '<p>'.  t("This is intended to help people reuse and also share their configurations, so that alike sites can easily be kept looking the same.") .'</p>';
@@ -70,7 +70,7 @@ function primermanager_help($path, $arg)
 
 /**
  * Create a module settings/configuration page
- * 
+ *
  * @return ?
  *
  * http://drupal.org/node/206761
@@ -78,46 +78,46 @@ function primermanager_help($path, $arg)
 
 function primermanager_admin()
 {
-	
+
     // if form submitted, then process choice and apply theme settings
 	if($_REQUEST['op'] == 'Submit') {
-		
+
 		if(empty($_REQUEST['primermanager_name'])) {
 			$name = 'Unnamed Configuration';
 		} else {
 			$name = htmlentities($_REQUEST['primermanager_name']);
 		}
-		
+
 		if($_REQUEST['primermanager_selected_operation'] == 'save') {
 			primermanager_save_settings_to_database(theme_get_settings('primer'), $name);
 		}
-		
+
 		if($_REQUEST['primermanager_selected_operation'] == 'import') {
 			primermanager_import_settings_to_database($_REQUEST['primermanager_import_settings']);
 		}
-		
+
 		if($_REQUEST['primermanager_selected_operation'] == 'share') {
 			primermanager_export_settings_for_local_share(theme_get_settings('primer'), $name);
 		}
-		
+
 		if($_REQUEST['primermanager_selected_operation'] == 'export') {
 			primermanager_export_settings_for_global_share(theme_get_settings('primer'), $name);
 		}
-		
+
 		if($_REQUEST['primermanager_selected_operation'] == 'delete') {
 			primermanager_delete_local_configuration($_REQUEST['primermanager_local_configurations']);
 		}
-		
+
 		/*
 		echo '<pre>';
     	print_r($_REQUEST);
 		die('here');
 		*/
-		
+
 	} else {
-		
-		$form = array();	
-		
+
+		$form = array();
+
 	    $form['primermanager_selected_operation'] = array(
 	        '#type'          => 'select',
 	        '#title'         => t('What do you want to do?'),
@@ -129,32 +129,32 @@ function primermanager_admin()
 	    							'share' 	=> 'Share current theme as a preset',
 	        						'import' 	=> 'Import a shared theme preset',
 	    							'export' 	=> 'Export current theme to submit to Drupal Admins',
-	    							'delete' 	=> 'Remove a preset permanently (cannot be undone)',	
+	    							'delete' 	=> 'Remove a preset permanently (cannot be undone)',
 	    						),
 	    );
-	    
+
 		$form['primermanager_local_configurations'] = array(
 	        '#type'          => 'select',
 	        '#title'         => t('Select Local Configuration'),
 	        '#default_value' => 0,
 	        '#required'      => TRUE,
 	    );
-	    
+
 		$configurations = primermanager_getLocalConfigurations();
 		$form['primermanager_local_configurations']['#options'][0] = '--- select ---';
 	    foreach ($configurations as $c) {
 	        $form['primermanager_local_configurations']['#options'][$c['configKey']] = $c['name'] . ' (' . date('Y-m-d', $c['date']) . ')';
 	    }
-	    
+
 	    $form['primermanager_name'] = array(
 	        '#type'          => 'textfield',
 	        '#title'         => t('Human readable name for this configuration '),
 	        '#default_value' => '',
 	        '#description'   => t("<p>Give a short (max 30 characters) but descriptive name for this configuration so you and others know what to expect if they apply it to their site. <br />IE: 'OIT Committee Theme 2012 v1.'</p>"),
 	        '#required'      => FALSE,
-	    	'#maxlength'	 => '30', 
+	    	'#maxlength'	 => '30',
 	    );
-	    
+
 	    $form['primermanager_import_settings'] = array(
 	        '#type'          => 'textarea',
 	        '#title'         => t('Paste the exported settings file contents here'),
@@ -165,11 +165,11 @@ function primermanager_admin()
 	}
 
   	$form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
-	
+
 	return $form;
 
 }
-  
+
 /**
  * Need to define a URL within Drupal for the module settings page
  * http://api.drupal.org/api/drupal/developer--hooks--core.php/function/hook_menu/6
@@ -196,12 +196,12 @@ function primermanager_menu()
 	    'title' 			=> 'Primer Theme Configuration',
 	    'page callback' 	=> 'drupal_goto',
 	    'page arguments' 	=> array('admin/build/themes/settings/primer'),
-	    'access arguments' 	=> array('configure primer theme', 'select different theme'),
+	    'access arguments' 	=> array('configure primer theme'),
 	    'type' 				=> MENU_LOCAL_TASK
   	);
 
   	// primer configuration menu item for admins (those with select different theme permissions)
-  	$items['admin/build/primerconfiguration'] = array(
+  	$items['admin/build/primerconfigurationadmin'] = array(
 	    'title' 			=> 'Primer Theme Configuration',
 	    'page callback' 	=> 'drupal_goto',
 	    'page arguments' 	=> array('admin/build/themes/settings/primer'),
@@ -217,111 +217,111 @@ function primermanager_menu()
 
 /*
  * Save settings to the database
- * 
+ *
  */
 
 function primermanager_save_settings_to_database($settings, $name) {
-	
+
 	// prepend with "local_" so that it cannot conflict with any global configurations that might be added later
 	$newConfigKey = 'local_' . primermanager_convert_name_to_local_configKey($name);
-	
+
 	// remove unnecessary fields from $settings
 	$savedSettings = array();
 	foreach($settings as $key => $value) {
-		if(!in_array($key, primermanager_unshared_fields())) {		
+		if(!in_array($key, primermanager_unshared_fields())) {
 			$savedSettings[$key] = $value;
 		}
 	}
-	
+
 	// insert into the primermanager table
-	db_query('INSERT INTO {primermanager} 
-   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
+	db_query('INSERT INTO {primermanager}
+   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')",
    		$newConfigKey, $name, time(), serialize($savedSettings)
 	);
-	
+
 	drupal_set_message(t('New Primer Theme Configuration Saved: ' . $newConfigKey));
 	drupal_set_message(t('The new configuration is now available from the theme configuration page'));
 	watchdog('primermanager', 'New Primer Theme Configuration Saved: ' . $newConfigKey);
-	
+
 }
 
 /*
  * Delete configuration from local database
- * 
+ *
  */
 
 function primermanager_delete_local_configuration($configKey) {
 
 	// delete the record from the primermanager table
 	db_query("DELETE FROM {primermanager} WHERE configKey = '%s'", $configKey);
-	
+
 	drupal_set_message(t('Local configuration deleted: ' . $configKey));
 	watchdog('primermanager', 'Local configuration deleted: ' . $configKey);
-	
+
 }
 
 /*
  * Import settings to a local configuration
- * 
+ *
  */
 
 function primermanager_import_settings_to_database($importedSettings) {
- 
+
 	$importArray = json_decode($importedSettings, true); // decodes json string, and the true flag returns an assoc array instead of an object
-	
+
 	// get all local configurations so we can make sure that the one being imported does not already exist
 	$allLocalConfigurations = primermanager_getLocalConfigurations();
-	
+
 	foreach($importArray as $i) {
 
 		if(isset($allLocalConfigurations[$i['configKey']])) {
 			drupal_set_message(t('The configuration you attempted to import already exists: ' . $i['name']));
 		} else {
-		
+
 			// insert into the primermanager table
-			db_query('INSERT INTO {primermanager} 
-		   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')", 
+			db_query('INSERT INTO {primermanager}
+		   		(configKey, name, date, settings) ' . "VALUES ('%s', '%s', '%s', '%s')",
 		   		$i['configKey'], $i['name'], time(), serialize($i['settings'])
 			);
-			
+
 			drupal_set_message(t('Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')'));
 			drupal_set_message(t('The new configuration is now available from the theme configuration page'));
 			watchdog('primermanager', 'Primer preset imported: ' . $i['name'] . ' (' . $i['configKey'] . ')');
-			
+
 			return true;
 		}
 	}
-	
+
 }
 
 /*
  * export settings file so it can be imported locally
- * 
+ *
  */
 function primermanager_export_settings_for_local_share($settings, $name) {
-	
+
 	$filename = 'primer_theme_configuration_' . primermanager_convert_name_to_local_configKey($name);
-	
+
 	header('Content-type: text/plain');
-	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');	
-	
+	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');
+
 	$returnArray = array();
 	$fieldsArray = array();
 	foreach($settings as $key => $value) {
-		if(!in_array($key, primermanager_unshared_fields())) {		
+		if(!in_array($key, primermanager_unshared_fields())) {
 			$fieldsArray[$key] = $value;
 		}
 	}
-	
+
 	$returnArray['shared_' . primermanager_convert_name_to_local_configKey($name)] = array(
 		'configKey'	=> 'shared_' . primermanager_convert_name_to_local_configKey($name),
 		'name'		=> $name,
 		'date'		=> time(),
 		'settings'	=> $fieldsArray,
 	);
-	
+
 	echo json_encode($returnArray);
-	
+
 	watchdog('primermanager', 'New Primer Theme Configuration Exported: exported_' . primermanager_convert_name_to_local_configKey($name));
 	/*
 		echo '<pre>';
@@ -332,15 +332,15 @@ function primermanager_export_settings_for_local_share($settings, $name) {
 
 /*
  * export settings file so it can be added to the global presets
- * 
+ *
  */
 function primermanager_export_settings_for_global_share($settings, $name) {
-	
+
 	$filename = 'primer_theme_configuration_' . primermanager_convert_name_to_local_configKey($name);
-	
+
 	header('Content-type: text/plain');
-	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');	
-	
+	header('Content-Disposition: attachment; filename="' . $filename . '".txt"');
+
 	echo "[START]\n
 		'exported_" . primermanager_convert_name_to_local_configKey($name) ."' => array( \n
 		'configKey'	=>\t'exported_" . primermanager_convert_name_to_local_configKey($name) ."',\n
@@ -348,15 +348,15 @@ function primermanager_export_settings_for_global_share($settings, $name) {
 		'date' =>\t'" . time() . "',\n
 		'settings' =>\tarray(\n
 		";
-	
+
 	foreach($settings as $key => $value) {
-		if(!in_array($key, primermanager_unshared_fields())) {		
+		if(!in_array($key, primermanager_unshared_fields())) {
 			echo "\t\t\t'" . $key . "' => '" . $value . "',\n";
 		}
 	}
-	
+
 	echo "),\n),\n[END]";
-	
+
 	watchdog('primermanager', 'New Primer Theme Configuration Exported: exported_' . primermanager_convert_name_to_local_configKey($name));
 	/*
 		echo '<pre>';
@@ -366,14 +366,14 @@ function primermanager_export_settings_for_global_share($settings, $name) {
 }
 
 /*
- * returns array of fields that should not be saved to the database or exported for sharing 
- * 
+ * returns array of fields that should not be saved to the database or exported for sharing
+ *
  */
 
 function primermanager_unshared_fields() {
-	
+
 	return array(
-		'mission', 
+		'mission',
 	    'default_logo',
 	    'logo_path',
 	    'default_favicon',
@@ -407,7 +407,7 @@ function primermanager_unshared_fields() {
 		'footer_contact_information',
 		'copyright_information',
 	);
-	
+
 }
 
 function primermanager_convert_name_to_local_configKey($name) {
@@ -417,26 +417,26 @@ function primermanager_convert_name_to_local_configKey($name) {
 
 /*
  * get all the local configurations saved by the primermanager module
- * 
- * 
+ *
+ *
  */
 function primermanager_getLocalConfigurations() {
-		
+
     $result = db_query("SELECT * FROM {primermanager}");
 	$returnArray = array();
-	
+
 	while ($c = db_fetch_array($result)) {
-		
+
 		$returnArray[$c['configKey']]['configKey'] = $c['configKey'];
 		$returnArray[$c['configKey']]['name'] = $c['name'];
 		$returnArray[$c['configKey']]['date'] = $c['date'];
 		$returnArray[$c['configKey']]['settings'] = unserialize($c['settings']);
-  	
+
 	}
-	
-	return $returnArray;	
-	
+
+	return $returnArray;
+
 }
 
 
-  
+
